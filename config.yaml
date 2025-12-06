@@ -1,0 +1,42 @@
+# ================================================================
+# DjinnOrganizer - Example config with parameter explanations
+#
+# Fields:
+#   search: folder to scan (~ expands to home)
+#   extensions: list of file extensions to process (case-insensitive)
+#   destination: where to move files (ignored if delete: true)
+#   delete: if true, matching files are deleted instead of moved
+#   ignore_hidden: skip hidden files starting with "."
+#   wait_for_stable: wait a few seconds to ensure file is done downloading
+#   all: if true, process all files (use with ignore_extensions to skip some)
+#   ignore_extensions: extensions to skip when "all" is true
+# ================================================================
+
+sorting:
+
+  # Images → move to Pictures/Downloads
+  - search: "~/Downloads"
+    extensions: [".jpeg", ".jpg", ".png"]
+    destination: "~/Pictures/Downloads"
+    ignore_hidden: true
+
+  # Videos → move to Videos/Downloads
+  - search: "~/Downloads"
+    extensions: [".mp4", ".mkv"]
+    destination: "~/Videos/Downloads"
+    ignore_hidden: true
+
+  # ISOs → move to ~/ISOS, wait for files to finish downloading
+  - search: "~/Downloads"
+    extensions: [".img", ".iso"]
+    destination: "~/ISOS"
+    ignore_hidden: true
+    wait_for_stable: true
+
+  # Clean everything else except .part files, delete them
+  - search: "~/Downloads"
+    all: true
+    ignore_extensions: [".part"]
+    delete: true
+    ignore_hidden: true
+    wait_for_stable: true
