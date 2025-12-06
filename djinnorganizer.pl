@@ -69,9 +69,8 @@ sub filter_files {
         # Ignore hidden files by default
         my $ignore_hidden = exists $rule->{ignore_hidden} ? $rule->{ignore_hidden} : 1;
 
-        # Source directory
-        my $source = $rule->{search};
-        $source =~ s{^~}{$home};
+        # Support multiple sources
+        my @sources = ref($rule->{search}) eq 'ARRAY' ? @{$rule->{search}} : ($rule->{search});
 
         # Destination directory
         my $destination;
@@ -80,86 +79,100 @@ sub filter_files {
             $destination =~ s{^~}{$home};
         }
 
-        # Skip rule if source does not exist
-        unless (-d $source) {
-            warn "${RED}Source path does not exist:${RESET} $source, skipping rule.\n";
-            next;
-        }
-
-        # Create destination if it does not exist
-        if (!$rule->{delete} && !-d $destination) {
-            print "${BLUE}Destination path does not exist, creating:${RESET} $destination\n";
-            mkdir $destination or do { warn "${RED}Failed to create:${RESET} $destination: $!"; next; };
-        }
-        
-        print "${GREEN}[*] Processing:${RESET} ${BLUE}$source${RESET}\n\n";
-  
-        opendir(my $dh, $source) or do { warn "${RED}Failed to open:${RESET} $source: $!"; next; };  
-    
-        my $all = exists $rule->{all} ? $rule->{all} : (exists $rule->{ignore_extensions} ? 1 : 0);
-        my $query_bool = 1;
-	   
-        my @files = grep {
-            my $full_path = "$source/$_";
-
-            (-f $full_path) &&    # only files, skip directories
-            (!$ignore_hidden || $_ !~ /^\./) &&
-            do {
-                my ($ext) = $_ =~ /(\.[^.]+)$/;
-                my $include = 0;
-	   
-                if ($all) {
-                    if (exists $rule->{ignore_extensions} && $ext && grep { lc $_ eq lc $ext } @{$rule->{ignore_extensions}}) {
-                        $include = 0;
-                        print "${RED}[-] Ignored (extension):${RESET} $_\n";
-                    } else {
-                        $include = 1;
-                        print "${GREEN}[+] Included (ALL mode):${RESET} $_\n";
-                    }
-                } else {
-                    $include = $ext && grep { lc $_ eq lc $ext } @{$rule->{extensions}};
-                    if ($include) {
-                        print "${GREEN}[+] Included:${RESET} $_\n";
-                    } else {
-                        print "${YELLOW}[~] Not matching extension:${RESET} $_\n";
-                    }
-                }
-	   
-                $query_bool = 0 if $include;  # found at least one file
-                $include;
+        # Show extensions being searched
+        if (exists $rule->{extensions}) {
+            print "${BLUE}[*] Searching for files with extensions:${RESET} " . join(", ", @{$rule->{extensions}}) . "\n";
+        } elsif (exists $rule->{all}) {
+            print "${BLUE}[*] Searching all files";
+            if (exists $rule->{ignore_extensions}) {
+                print " except: " . join(", ", @{$rule->{ignore_extensions}});
             }
-        } readdir($dh);
-
-        if($query_bool == 1) {
-            print "${YELLOW}[*] No files with specified conditions.${RESET}\n";
+            print "${RESET}\n";
         }
-	   
-        # Wait for files to stabilize if specified
-        my $wait = exists $rule->{wait_for_stable} ? $rule->{wait_for_stable} : 0;
-        wait_for_stable($source, \@files) if $wait;
-        
-        # Move or delete files
-        for my $f (@files) {
-            my $full_path = "$source/$f";
+
+        for my $source (@sources) {
+            $source =~ s{^~}{$home};
+
+            # Skip rule if source does not exist
+            unless (-d $source) {
+                warn "${RED}Source path does not exist:${RESET} $source, skipping this source.\n";
+                next;
+            }
+
+            # Create destination if it does not exist
+            if (!$rule->{delete} && !-d $destination) {
+                print "${BLUE}Destination path does not exist, creating:${RESET} $destination\n";
+                mkdir $destination or do { warn "${RED}Failed to create:${RESET} $destination: $!"; next; };
+            }
             
-            if ($rule->{delete}) {
-                if (unlink $full_path) {
-                    print "${RED}[*] Removed:${RESET} $full_path\n";
-                } else {
-                    warn "${RED}[!] Failed to delete:${RESET} $full_path: $!\n";
+            print "${GREEN}[*] Processing:${RESET} ${BLUE}$source${RESET} -> ${YELLOW}$destination ${RESET}\n";
+  
+            opendir(my $dh, $source) or do { warn "${RED}Failed to open:${RESET} $source: $!"; next; };  
+    
+            my $all = exists $rule->{all} ? $rule->{all} : (exists $rule->{ignore_extensions} ? 1 : 0);
+            my $query_bool = 1;
+               
+            my @files = grep {
+                my $full_path = "$source/$_";
+
+                (-f $full_path) &&    # only files, skip directories
+                (!$ignore_hidden || $_ !~ /^\./) &&
+                do {
+                    my ($ext) = $_ =~ /(\.[^.]+)$/;
+                    my $include = 0;
+               
+                    if ($all) {
+                        if (exists $rule->{ignore_extensions} && $ext && grep { lc $_ eq lc $ext } @{$rule->{ignore_extensions}}) {
+                            $include = 0;
+                            print "${RED}[-] Ignored (extension):${RESET} $_\n";
+                        } else {
+                            $include = 1;
+                            print "${GREEN}[+] Included (ALL mode):${RESET} $_\n";
+                        }
+                    } else {
+                        $include = $ext && grep { lc $_ eq lc $ext } @{$rule->{extensions}};
+                        if ($include) {
+                            print "${GREEN}[+] Included:${RESET} $_\n";
+                        }
+                    }
+               
+                    $query_bool = 0 if $include;  # found at least one file
+                    $include;
                 }
-            } else {
-                my $dest_path = "$destination/$f";
-                if (move($full_path, $dest_path)) {
-                    print "${GREEN}[*] Moved:${RESET} ${BLUE}$full_path${RESET} -> ${BLUE}$dest_path${RESET}\n";
+            } readdir($dh);
+
+            if($query_bool == 1) {
+                print "${RED}[*] No files with specified conditions.${RESET}";
+            }
+               
+            # Wait for files to stabilize if specified
+            my $wait = exists $rule->{wait_for_stable} ? $rule->{wait_for_stable} : 0;
+            wait_for_stable($source, \@files) if $wait;
+            
+            # Move or delete files
+            for my $f (@files) {
+                my $full_path = "$source/$f";
+                
+                if ($rule->{delete}) {
+                    if (unlink $full_path) {
+                        print "${RED}[*] Removed:${RESET} $full_path\n";
+                    } else {
+                        warn "${RED}[!] Failed to delete:${RESET} $full_path: $!\n";
+                    }
                 } else {
-                    warn "${RED}[!] Failed to move:${RESET} $full_path -> $dest_path: $!\n";
+                    my $dest_path = "$destination/$f";
+                    if (move($full_path, $dest_path)) {
+                        print "${GREEN}[*] Moved:${RESET} ${BLUE}$full_path${RESET} -> ${BLUE}$dest_path${RESET}\n";
+                    } else {
+                        warn "${RED}[!] Failed to move:${RESET} $full_path -> $dest_path: $!\n";
+                    }
                 }
             }
+            
+            closedir($dh);
+            print "\n\n";
+		  sleep 1;
         }
-        
-        closedir($dh);
-        print "\n\n";
     }
 }
 
