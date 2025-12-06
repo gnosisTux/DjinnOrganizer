@@ -104,9 +104,12 @@ sub filter_files {
                 print "${BLUE}Destination path does not exist, creating:${RESET} $destination\n";
                 mkdir $destination or do { warn "${RED}Failed to create:${RESET} $destination: $!"; next; };
             }
-            
-            print "${GREEN}[*] Processing:${RESET} ${BLUE}$source${RESET} -> ${YELLOW}$destination ${RESET}\n";
-  
+
+		  if($destination) {
+		    print "${GREEN}[*] Processing:${RESET} ${BLUE}$source${RESET} -> ${YELLOW}$destination ${RESET}\n";
+		  } else {
+		    print "${GREEN}[*] Removing:${RESET} ${BLUE}$source${RESET}\n"
+		  }
             opendir(my $dh, $source) or do { warn "${RED}Failed to open:${RESET} $source: $!"; next; };  
     
             my $all = exists $rule->{all} ? $rule->{all} : (exists $rule->{ignore_extensions} ? 1 : 0);
