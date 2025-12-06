@@ -54,6 +54,43 @@ sorting:
     ignore_hidden: true
     wait_for_stable: true
 
+sorting:
+
+  # Images → move to Pictures/Downloads
+  - search: "~/Downloads"
+    extensions: [".jpeg", ".jpg", ".png"]
+    destination: "~/Pictures/Downloads"
+    ignore_hidden: true
+
+  # Videos → move to Videos/Downloads
+  - search: "~/Downloads"
+    extensions: [".mp4", ".mkv"]
+    destination: "~/Videos/Downloads"
+    ignore_hidden: true
+
+  # ISOs → move to ~/ISOS, wait for files to finish downloading
+  - search: "~/Downloads"
+    extensions: [".img", ".iso"]
+    destination: "~/ISOS"
+    ignore_hidden: true
+    wait_for_stable: true
+
+  # Delete everything else except .part files
+  - search: "~/Downloads"
+    all: true
+    ignore_extensions: [".part"]
+    delete: true
+    ignore_hidden: true
+    wait_for_stable: true
+
+  # Books & documents → multiple source folders
+  - search: 
+      - "~/Downloads"
+      - "~/Downloads/Telegram Desktop"
+    extensions: [".pdf", ".epub", ".mobi", ".azw", ".azw3", ".djvu", ".cbz", ".cbr", ".txt", ".doc", ".docx", ".odt", ".rtf", ".html", ".xhtml", ".ppt", ".pptx"]
+    destination: "~/Documents/Libros y Documentos/DjinnOrganizer"
+    ignore_hidden: true
+
   # Delete everything else except .part files
   - search: "~/Downloads"
     all: true
@@ -65,7 +102,7 @@ sorting:
 
 ### Parameters
 
-* `search` : folder to scan (`~` = home)
+* `search` : folder or list of folders to scan (~ = home)
 * `extensions` : process only these extensions
 * `destination` : folder to move files to (ignored if `delete: true`)
 * `delete` : remove files instead of moving
@@ -79,5 +116,4 @@ sorting:
 * Hidden files are ignored by default.
 * `destination` is ignored if `delete` is true.
 * `wait_for_stable` ensures incomplete downloads are skipped.
-
-
+* `search` now supports multiple source folders in a single rule.
