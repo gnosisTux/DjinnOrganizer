@@ -80,6 +80,4 @@ sorting:
 * `destination` is ignored if `delete` is true.
 * `wait_for_stable` ensures incomplete downloads are skipped.
 
-```
-
 
