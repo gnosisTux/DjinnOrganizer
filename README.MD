@@ -54,27 +54,6 @@ sorting:
     ignore_hidden: true
     wait_for_stable: true
 
-sorting:
-
-  # Images → move to Pictures/Downloads
-  - search: "~/Downloads"
-    extensions: [".jpeg", ".jpg", ".png"]
-    destination: "~/Pictures/Downloads"
-    ignore_hidden: true
-
-  # Videos → move to Videos/Downloads
-  - search: "~/Downloads"
-    extensions: [".mp4", ".mkv"]
-    destination: "~/Videos/Downloads"
-    ignore_hidden: true
-
-  # ISOs → move to ~/ISOS, wait for files to finish downloading
-  - search: "~/Downloads"
-    extensions: [".img", ".iso"]
-    destination: "~/ISOS"
-    ignore_hidden: true
-    wait_for_stable: true
-
   # Delete everything else except .part files
   - search: "~/Downloads"
     all: true
