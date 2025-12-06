@@ -34,7 +34,6 @@ Example:
 
 ```yaml
 sorting:
-
   # Images → move to Pictures/Downloads
   - search: "~/Downloads"
     extensions: [".jpeg", ".jpg", ".png"]
@@ -67,7 +66,7 @@ sorting:
       - "~/Downloads"
       - "~/Downloads/Telegram Desktop"
     extensions: [".pdf", ".epub", ".mobi", ".azw", ".azw3", ".djvu", ".cbz", ".cbr", ".txt", ".doc", ".docx", ".odt", ".rtf", ".html", ".xhtml", ".ppt", ".pptx"]
-    destination: "~/Documents/Libros y Documentos/DjinnOrganizer"
+    destination: "~/Documents/Books And Documents/DjinnOrganizer"
     ignore_hidden: true
 
   # Delete everything else except .part files
